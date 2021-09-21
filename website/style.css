@@ -1,7 +1,12 @@
-.okay{
-	background-color: green;
-}
-
 .notokay{
 	background-color: red;
+}
+
+#test{
+	color: black;
+}
+
+.okay{
+	background-color: green;
+	color: white;
 }

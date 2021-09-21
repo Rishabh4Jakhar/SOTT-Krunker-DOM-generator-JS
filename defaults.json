@@ -1,23 +1,15 @@
 {
     "krunker_map": {
-        "name": "New Krunker Map",
-        "ambient": "#97a0a8",
-        "light": "#f2f8fc",
-        "sky": "#dce8ed",
-        "fog": "#8d9aa0",
-        "fogD": 2000,
-        "xyz": [
-            100,
-            10,
-            100
-        ],
+        "name": "My website",
+        "ambient": "#FFFFFF",
+        "light": "#FFFFFF",
+        "sky": "#FFFFFF",
+        "fog": "#FFFFFF",
+        "fogD": 10,
+        "xyz": [100, 10, 100],
         "objects": [
             {
-                "p": [
-                    0,
-                    -10,
-                    0
-                ],
+                "p": [0, -10, 0],
                 "si": 0
             }
         ],
@@ -26,14 +18,7 @@
             "server": ""
         },
         "spawns": [
-            [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
-            ]
+            [0, 0, 0, 0, 0, 0]
         ]
     }
 }
