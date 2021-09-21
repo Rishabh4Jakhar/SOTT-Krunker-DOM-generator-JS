@@ -5,3 +5,19 @@ span {
 div {
 	display: block;
 }
+
+table {
+	display: table;
+}
+
+tr {
+	display: table-row;
+}
+
+th {
+	display: table-header-group;
+}
+
+td{
+	display: table-cell;
+}

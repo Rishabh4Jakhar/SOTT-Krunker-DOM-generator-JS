@@ -14,7 +14,7 @@ let onStart = `GAME.DEFAULT.disablePrediction();
     GAME.INPUTS.disableDefault();
     GAME.UI.hideCrosshair();
     GAME.PLAYERS.disableMeshes();
-	GAME.SETTINGS.set("sound", 0);
+	GAME.SETTINGS.set("sound", "0");
     
     GAME.UI.addDIV("SOTT_BODY", true, "position: absolute; left: 0; right: 0; top: 0; bottom: 0; z-index: 9999999999; background-color: white;");
 `;
@@ -66,6 +66,7 @@ let virtual_elements = [];
 
 
 function apply_styling(obj, el_name){
+	//TODO: inline styling
 	let style_tags = [
 		el_name.split("_")[0], 
 		...obj.class?.split(" ").map(x => {return "." + x}) ?? [], 
