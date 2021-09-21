@@ -1,12 +1,19 @@
-.notokay{
-	background-color: red;
+.title{
+    color:#f6275d;
 }
-
-#test{
-	color: black;
+.quality{
+    color:#44e944;
+    font-weight: bold;
 }
-
-.okay{
-	background-color: green;
-	color: white;
+.spacing{
+    padding-left: 15px;
+}
+div{
+    margin-top: 10px;
+}
+#discord{
+    color:#215df6;
+    text-decoration: underline;
+	margin-left: 5px;
+	margin-right: 5px;
 }
