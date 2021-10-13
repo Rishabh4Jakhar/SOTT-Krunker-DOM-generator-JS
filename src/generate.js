@@ -17,14 +17,22 @@ let onRender = hardcoded_ks.onRender;
 let onStart = hardcoded_ks.onStart;
 const server_side = hardcoded_ks.server;
 
-const debug_css = true;
-const names = [];
+//array of all warnings, gets displayed at end of building.
 const warning_stack = [];
+
+//wether to show css or html build debugging.
+const debug_css = false;
+const debug_html = false;
+const debug_separator = false;
+
+//all external styles.
 const default_styles = CSSJSON.toJSON(fs.readFileSync("./constants/index.css"));
+const imported_styles = [];
 
-const styles = [default_styles];
+//list of all generated names.
+const names = [];
 
-function name_generator(length = 8) {
+function name_generator(length = 8 /*should be about 1,198,774,720 combinations?*/) {
     let alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890", name = "SOTT_";
     while (true) {
         for (let i = 0; i < length; i++) name += alphabet[Math.floor(Math.random() * alphabet.length)];
@@ -56,100 +64,56 @@ function build_dom(obj){
 	//add linked stylesheets.
 	for (const link of all_el(head.child, "link")) {
 		if (link?.attr?.rel == "stylesheet" && link?.attr?.href){
-			styles.push(CSSJSON.toJSON(fs.readFileSync(website_folder + link?.attr?.href)));
+			imported_styles.push(CSSJSON.toJSON(fs.readFileSync(website_folder + link?.attr?.href)));
 		}
 	}
 
-	//recussive_creation(body, "SOTT_BODY");
+	for (let child of body.child){
+		generate_dom(child, "SOTT_BODY");
+	}
 }
 
-function apply_styling(obj, el_name){
-	//TODO: inline styling
-	let style_tags = [
-		el_name.split("_")[0], 
-		...obj.class?.split(" ").map(x => {return "." + x}) ?? [], 
-		...obj.id?.split(" ").map(x => {return "#" + x}) ?? []
-	];
+function generate_dom(obj, parent) {
+	//create element name.
+	let tag = obj?.tag ? obj.tag : "inline";
+	let element_name = tag + "_" + name_generator();
+	if ((debug_html || debug_css) && debug_separator) console.log(`[HTML/CSS] ----- ${element_name} -----`);
 
-	//for all styling tags availble 
-	for (const style_tag of style_tags) {
-		//loop thru all styles to find style tag
-		for (let i = 0; i < styles.length; i++) {
-			for (const style_class of Object.entries(styles[i].children)) {
-				//if if id or class matches.
-				if (style_tag == style_class[0]){
-					if (debug_css) console.log("\n" + style_class[0] + " => " + el_name);
-					let class_index = virtual_elements.findIndex(x => x.id == el_name); //get index of style class of specific parent.
+	// group of styling based on highest priorities.
+	let element_style = {};
+	//default tag styling
+	Object.assign(element_style, default_styles.children?.[tag]?.attributes ?? {});
 
-					if (class_index >= 0){
-						for (const name of Object.entries(style_class[1].attributes)) { //go over all atributes and overwrite or add them.
-							let attribute_index = virtual_elements[class_index].attributes.findIndex(x => x[0] == name[0]);
-
-							//if attribute exists already, overwrite.
-							if (attribute_index >= 0){
-								if (debug_css) console.log("⊢ Overwriting property " + virtual_elements[class_index].attributes[attribute_index][0] + " to " + name[1]);
-								virtual_elements[class_index].attributes[attribute_index][1] = name[1];
-							} 
-							//if attribute doesnt exist, create new one.
-							else {
-								if (debug_css) console.log("⊢ Adding new property to existing class: " + name[0] + " with value " + name[1]);
-								virtual_elements[class_index].attributes.push([name[0], name[1]]);
-							}
-						}
-					}
-					else {
-						//creating new attribute class.
-						if (debug_css) console.log("⊢ Creating new class");
-						virtual_elements.push({id: el_name, attributes: Object.entries(style_class[1].attributes)});
-					}
-				}
-			}
-		}
-	}
-	return virtual_elements.find(x => x.id == el_name).attributes.map(y => {return y[0] + ": " + y[1] + ";"}).join(" ");
-}
-
-function recussive_creation(obj, parent) {
-	//console.log(obj);
-	for (const el_type of Object.keys(obj)){
-		if (el_type == "$t"){
-			if (!Object.keys(obj).some(x => !reserved_names.includes(x))) {
-				if (obj[el_type].length > 0) onStart += `    GAME.UI.updateDIVText("${parent}", "${obj[el_type]}");\n`;
-				return;
-			} else if (obj[el_type].length > 0){
-				throw("Please do not use text in nested elements. Make a special element for each bit of text.");
-			}
-		} else if (reserved_names.includes(el_type)){
-			continue;
-		}
-
-		for (const children of obj[el_type]) {
-			if (typeof children == "string"){
-				create_text_el(el_type, parent, children);
-			}
-			else if (typeof children == "object"){
-				let name = el_type + "_" + name_generator();
-				onStart += `    GAME.UI.addDIV("${name}", true, "${apply_styling(children, name) ?? ""}", "${parent}");\n`;
-				recussive_creation(children, name);
-			}
-		}
+	//class styling
+	if (obj?.attr?.class) {
+		let classList = typeof obj?.attr?.class === "string" ? [obj?.attr?.class] : [...obj?.attr?.class];
+		classList.map(class_name => {Object.assign(element_style, imported_styles.children?.["." + class_name]?.attributes ?? {})}) //class styling
 	}
 
-	function create_text_el(el_type, parent, text){
-		let name = el_type + "_" + name_generator();
-		onStart += `    GAME.UI.addDIV("${name}", true, "${apply_tag(el_type) ?? ""}", "${parent}");\n`;
-		console.log(name);
-		if (text.length > 0) onStart += `    GAME.UI.updateDIVText("${name}", "${text}");\n`;
+	if (obj?.attr?.id) {
+		let idList = typeof obj?.attr?.id === "string" ? [obj?.attr?.id] : [...obj?.attr?.id];
+		idList.map(id_name => {Object.assign(element_style, imported_styles.children?.["." + id_name]?.attributes ?? {})}) //id styling
 	}
 
-}
+	//TODO:
+	//Object.assign(element_style, ?? {}); //inline styling
 
-function apply_tag(tag){
-	for (const stylesheet of styles) {
-		for (const style_pair of Object.entries(stylesheet.children)) {
-			if (style_pair[0] == tag){
-				return Object.entries(style_pair[1].attributes).map(x => {return `${x[0]}: ${x[1]}`;}).join("");
-			}
+	//if its a piece of text, create wrapper
+	if (obj.node === "text"){
+		let stripped_text = obj.text.replace(/(\r\n|\n|\r|\t)/gm, "");
+		if (stripped_text.replace(/(\s+)/gm, "").length > 0){
+			if (debug_html) console.log(`[HTML] Generated ${tag} "${element_name}" and appended it to ${parent}`);
+			onStart += `    GAME.UI.addDIV("${element_name}", true, "", "${parent}");\n`;
+			if (debug_html) console.log(`[HTML] Updated ${tag} "${element_name}" 's text to "${stripped_text}"`);
+			onStart += `    GAME.UI.updateDIVText("${element_name}", "${stripped_text}");\n`;
+		}
+	}
+	//if its an element, keep recussing till text is found.
+	else if (obj.node === "element") {
+		for (let child of obj.child){
+			if (debug_html) console.log(`[HTML] Generated ${obj?.tag ?? "inline"} "${element_name}" and appended it to ${parent}`);
+			onStart += `    GAME.UI.addDIV("${element_name}", true, "", "${parent}");\n`;
+			generate_dom(child, element_name);
 		}
 	}
 }
