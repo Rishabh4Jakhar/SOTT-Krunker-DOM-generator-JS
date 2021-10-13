@@ -1,2 +1,0 @@
-node ./generate.js
-pause
