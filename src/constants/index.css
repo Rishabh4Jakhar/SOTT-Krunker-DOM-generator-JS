@@ -1,3 +1,11 @@
+/* WARNING: THESE ARE DEFAULT HTML PRESETS, DO NOT CHANGE UNLESS YOU KNOW WHAT YOU ARE DOING */
+
+inline {
+	all: inherit;
+	white-space: pre-wrap;
+	display: inline;
+}
+
 span {
 	display: inline;
 }
@@ -150,6 +158,7 @@ hr {
 }
 
 a {
+	display: inline;
 	color: #215df6;
 	text-decoration: underline;
 	cursor: pointer;

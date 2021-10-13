@@ -1,9 +1,8 @@
 console.clear();
 
 import fs from "fs";
-import XMLJSON from "xml2json";
-import CSSJSON from "CSSJSON";
-import nodecopy from "copy-paste";
+import CSSJSON from "cssjson";
+import clipboard from 'clipboardy';
 import html2json from "html2json";
 
 import default_source from "./constants/default_source.js";
@@ -33,7 +32,7 @@ const imported_styles = [];
 const names = [];
 
 function name_generator(length = 8 /*should be about 1,198,774,720 combinations?*/) {
-    let alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890", name = "SOTT_";
+    let alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890", name = "bashSOTT_";
     while (true) {
         for (let i = 0; i < length; i++) name += alphabet[Math.floor(Math.random() * alphabet.length)];
         if (!names.includes(name)) break;
@@ -85,25 +84,29 @@ function generate_dom(obj, parent) {
 	Object.assign(element_style, default_styles.children?.[tag]?.attributes ?? {});
 
 	//class styling
-	if (obj?.attr?.class) {
+	if (obj?.attr?.class) {//class styling
 		let classList = typeof obj?.attr?.class === "string" ? [obj?.attr?.class] : [...obj?.attr?.class];
-		classList.map(class_name => {Object.assign(element_style, imported_styles.children?.["." + class_name]?.attributes ?? {})}) //class styling
+		classList.map(class_name => {Object.assign(element_style, imported_styles[0].children?.["." + class_name]?.attributes ?? {})})
 	}
 
-	if (obj?.attr?.id) {
+	if (obj?.attr?.id) {//id styling
 		let idList = typeof obj?.attr?.id === "string" ? [obj?.attr?.id] : [...obj?.attr?.id];
-		idList.map(id_name => {Object.assign(element_style, imported_styles.children?.["." + id_name]?.attributes ?? {})}) //id styling
+		idList.map(id_name => {Object.assign(element_style, imported_styles[0].children?.["#" + id_name]?.attributes ?? {})})
 	}
 
-	//TODO:
-	//Object.assign(element_style, ?? {}); //inline styling
+	if (obj?.attr?.style) {//inline styling
+		let inline_style_object = {};
+		for (let offset = 0; offset < obj?.attr?.style.length; offset+= 2) inline_style_object[obj?.attr?.style[offset]] = obj?.attr?.style[offset + 1].toString()
+	}
+
+	let element_style_inline = Object.entries(element_style).map(style => {return style[0] + ": " + style[1] + ";"}).join(" ")
 
 	//if its a piece of text, create wrapper
 	if (obj.node === "text"){
 		let stripped_text = obj.text.replace(/(\r\n|\n|\r|\t)/gm, "");
 		if (stripped_text.replace(/(\s+)/gm, "").length > 0){
 			if (debug_html) console.log(`[HTML] Generated ${tag} "${element_name}" and appended it to ${parent}`);
-			onStart += `    GAME.UI.addDIV("${element_name}", true, "", "${parent}");\n`;
+			onStart += `    GAME.UI.addDIV("${element_name}", true, "${element_style_inline}", "${parent}");\n`;
 			if (debug_html) console.log(`[HTML] Updated ${tag} "${element_name}" 's text to "${stripped_text}"`);
 			onStart += `    GAME.UI.updateDIVText("${element_name}", "${stripped_text}");\n`;
 		}
@@ -112,7 +115,7 @@ function generate_dom(obj, parent) {
 	else if (obj.node === "element") {
 		for (let child of obj.child){
 			if (debug_html) console.log(`[HTML] Generated ${obj?.tag ?? "inline"} "${element_name}" and appended it to ${parent}`);
-			onStart += `    GAME.UI.addDIV("${element_name}", true, "", "${parent}");\n`;
+			onStart += `    GAME.UI.addDIV("${element_name}", true, "${element_style_inline}", "${parent}");\n`;
 			generate_dom(child, element_name);
 		}
 	}
@@ -131,7 +134,8 @@ default_source.krunker_map.scripts.client = Buffer.from(client_side).toString("b
 default_source.krunker_map.scripts.server = Buffer.from(server_side).toString("base64");
 
 console.log();
-nodecopy.copy(JSON.stringify(default_source.krunker_map));
+clipboard.writeSync(JSON.stringify(default_source.krunker_map));
+
 
 if (warning_stack.length) console.log("===== Found issues: =====");
 for (const error of warning_stack) console.warn("\u001b[31m" + error + "\u001b[0m");
