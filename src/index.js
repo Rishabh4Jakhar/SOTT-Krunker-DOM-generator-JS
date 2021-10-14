@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-exit()
 
-import {cwd, argv, exit} from "process";
+import {cwd, argv} from "process";
+import { fileURLToPath } from "url";
 import fs from "fs";
 import path from "path";
 import CSSJSON from "cssjson";
@@ -11,7 +11,10 @@ import html2json from "html2json";
 import default_source from "./constants/default_source.js";
 import hardcoded_ks from "./constants/hardcoded_ks.js";
 
-const src = "/usr/local/bin/krdom".split("/").slice(0, -1).join("/");
+const __filename = fileURLToPath(import.meta.url);
+
+const src = path.dirname(__filename);
+console.log(cwd());
 const target_folder = cwd() + "/";
 
 let onRender = hardcoded_ks.onRender;

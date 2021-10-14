@@ -8,15 +8,16 @@
 		"npm": "^8.0.0"
 	},
 	"name": "krunker-dom-generator",
-	"version": "0.1.2",
+	"version": "0.1.3",
 	"description": "Allows for converting HTML and CSS to KrunkScript, including entire websites. Javascript like DOM modification functionality thru a KrunkScript library.",
 	"main": "index.js",
 	"scripts": {
-	  "test": "echo \"Error: no test specified\" && exit 1"
+		"unload": "sudo npm uninstall -g --save",
+		"load": "sudo npm install -g"
 	},
 	"keywords": [
-	  "krunker",
-	  "krunkscript"
+		"krunker",
+		"krunkscript"
 	],
 	"author": "SwatDoge",
 	"license": "ISC",
