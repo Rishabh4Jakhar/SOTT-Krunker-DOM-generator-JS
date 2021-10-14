@@ -18,7 +18,12 @@ const hardcoded_ks = {
 
 	GAME.INPUTS.disableDefault();
 	GAME.PLAYERS.disableMeshes();
-	GAME.SETTINGS.set("sound", "0");
+	GAME.SETTINGS.set("ambientVolume", "0");
+	GAME.SETTINGS.set("voiceVolume", "0");
+	GAME.SETTINGS.set("uiVolume", "0");
+	GAME.SETTINGS.set("skinVolume", "0");
+	GAME.SETTINGS.set("playerVolume", "0");
+	GAME.SETTINGS.set("dialogueVolume", "0");
 
 	GAME.UI.addDIV("SOTT_BODY_CANVAS", true, "position: absolute; left: 0; right: 0; top: 0; bottom: 0; z-index: 9999999999; background-color: white;");
 	GAME.UI.addDIV("SOTT_BODY", true, "", "SOTT_BODY_CANVAS");
