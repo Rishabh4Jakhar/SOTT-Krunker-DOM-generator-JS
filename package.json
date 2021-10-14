@@ -6,5 +6,21 @@
 		"html2json": "^1.0.2",
 		"node-gyp": "^8.2.0",
 		"npm": "^8.0.0"
+	},
+	"name": "krunker-dom-generator",
+	"version": "0.1.2",
+	"description": "Allows for converting HTML and CSS to KrunkScript, including entire websites. Javascript like DOM modification functionality thru a KrunkScript library.",
+	"main": "index.js",
+	"scripts": {
+	  "test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"keywords": [
+	  "krunker",
+	  "krunkscript"
+	],
+	"author": "SwatDoge",
+	"license": "ISC",
+	"bin": {
+		"krdom": "./src/index.js"
 	}
 }

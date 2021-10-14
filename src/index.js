@@ -1,6 +1,8 @@
-console.clear();
+#!/usr/bin/env node
 
+import {cwd, argv} from "process";
 import fs from "fs";
+import path from "path";
 import CSSJSON from "cssjson";
 import clipboard from 'clipboardy';
 import html2json from "html2json";
@@ -8,7 +10,8 @@ import html2json from "html2json";
 import default_source from "./constants/default_source.js";
 import hardcoded_ks from "./constants/hardcoded_ks.js";
 
-const website_folder = "../website/";
+const src = path.dirname(argv[1]) + "/";
+const target_folder = cwd() + "/";
 
 let onRender = hardcoded_ks.onRender;
 let onStart = hardcoded_ks.onStart;
@@ -23,7 +26,7 @@ const debug_html = false;
 const debug_separator = false;
 
 //all external styles.
-const default_styles = CSSJSON.toJSON(fs.readFileSync("./constants/index.css"));
+const default_styles = CSSJSON.toJSON(fs.readFileSync(src + "/constants/index.css"));
 const imported_styles = [];
 
 //list of all generated names.
@@ -64,7 +67,7 @@ function build_dom(obj){
 	//add linked stylesheets.
 	for (const link of all_el(head.child, "link")) {
 		if (link?.attr?.rel == "stylesheet" && link?.attr?.href){
-			imported_styles.push(CSSJSON.toJSON(fs.readFileSync(website_folder + link?.attr?.href)));
+			imported_styles.push(CSSJSON.toJSON(fs.readFileSync(target_folder + link?.attr?.href)));
 		}
 	}
 
@@ -128,9 +131,9 @@ function generate_dom(obj, parent) {
 
 //go thru html files and start generating dom.
 //TODO: Multiple html files.
-for (const file of fs.readdirSync(website_folder)) {
+for (const file of fs.readdirSync(target_folder)) {
     if (file == "index.html") {
-		let contents = html2json.html2json(fs.readFileSync(website_folder + file, {encoding:'utf8', flag:'r'}));
+		let contents = html2json.html2json(fs.readFileSync(target_folder + file, {encoding:'utf8', flag:'r'}));
 		build_dom(contents);
     }
 }
@@ -143,13 +146,11 @@ default_source.krunker_map.scripts.client = Buffer.from(client_side).toString("b
 default_source.krunker_map.scripts.server = Buffer.from(server_side).toString("base64");
 
 console.log();
-clipboard.writeSync(JSON.stringify(default_source.krunker_map));
-
-
 if (warning_stack.length) console.log("===== Found issues: =====");
 for (const error of warning_stack) console.warn("\u001b[31m" + error + "\u001b[0m");
 if (warning_stack.length) console.log();
 
-console.log("===== Succesfully generated source =====");
+clipboard.writeSync(JSON.stringify(default_source.krunker_map));
+if (debug_separator) console.log("===== Succesfully generated source =====");
 console.log("\u001b[32m" + "✅ Map source copied to clipboard" + "\u001b[0m");
-console.log();
+if (debug_separator) console.log();
