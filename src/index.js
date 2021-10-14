@@ -103,7 +103,7 @@ function generate_dom(obj, parent) {
 	//inline styling
 	if (obj?.attr?.style) {
 		let inline_style_object = {};
-		for (let offset = 0; offset < obj?.attr?.style.length; offset+= 2) inline_style_object[obj?.attr?.style[offset]] = obj?.attr?.style[offset + 1].toString()
+		for (let offset = 0; offset < obj?.attr?.style.length; offset+= 2) inline_style_object[obj?.attr?.style[offset].replace(/(;|:)/gm, "")] = obj?.attr?.style[offset + 1].replace(/(;|:)/gm, "").toString()
 		Object.assign(element_style, inline_style_object)
 	}
 
