@@ -9,8 +9,6 @@ import default_source from "./constants/default_source.js";
 import hardcoded_ks from "./constants/hardcoded_ks.js";
 
 const website_folder = "../website/";
-const reserved_names = ["id", "class", "$t"];
-const virtual_elements = [];
 
 let onRender = hardcoded_ks.onRender;
 let onStart = hardcoded_ks.onStart;
@@ -31,6 +29,7 @@ const imported_styles = [];
 //list of all generated names.
 const names = [];
 
+//generate a fully unique name.
 function name_generator(length = 8 /*should be about 1,198,774,720 combinations?*/) {
     let alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890", name = "bashSOTT_";
     while (true) {
@@ -42,10 +41,12 @@ function name_generator(length = 8 /*should be about 1,198,774,720 combinations?
     return name;
 }
 
+//get all child elements that match the given type.
 function all_el(el, type){
 	return el.filter(main_element => main_element.node === "element" && main_element.tag === type);
 }
 
+//initialize head tags, and start building dom.
 function build_dom(obj){
 	//get the first head and body element.
 	let head = all_el(obj.child[0].child, "head");
@@ -67,6 +68,7 @@ function build_dom(obj){
 		}
 	}
 
+	//recussive creation, bind top child to body.
 	for (let child of body.child){
 		generate_dom(child, "SOTT_BODY");
 	}
@@ -84,19 +86,22 @@ function generate_dom(obj, parent) {
 	Object.assign(element_style, default_styles.children?.[tag]?.attributes ?? {});
 
 	//class styling
-	if (obj?.attr?.class) {//class styling
+	if (obj?.attr?.class) {
 		let classList = typeof obj?.attr?.class === "string" ? [obj?.attr?.class] : [...obj?.attr?.class];
 		classList.map(class_name => {Object.assign(element_style, imported_styles[0].children?.["." + class_name]?.attributes ?? {})})
 	}
 
-	if (obj?.attr?.id) {//id styling
+	//id styling
+	if (obj?.attr?.id) {
 		let idList = typeof obj?.attr?.id === "string" ? [obj?.attr?.id] : [...obj?.attr?.id];
 		idList.map(id_name => {Object.assign(element_style, imported_styles[0].children?.["#" + id_name]?.attributes ?? {})})
 	}
 
-	if (obj?.attr?.style) {//inline styling
+	//inline styling
+	if (obj?.attr?.style) {
 		let inline_style_object = {};
 		for (let offset = 0; offset < obj?.attr?.style.length; offset+= 2) inline_style_object[obj?.attr?.style[offset]] = obj?.attr?.style[offset + 1].toString()
+		Object.assign(element_style, inline_style_object)
 	}
 
 	let element_style_inline = Object.entries(element_style).map(style => {return style[0] + ": " + style[1] + ";"}).join(" ")
@@ -121,6 +126,8 @@ function generate_dom(obj, parent) {
 	}
 }
 
+//go thru html files and start generating dom.
+//TODO: Multiple html files.
 for (const file of fs.readdirSync(website_folder)) {
     if (file == "index.html") {
 		let contents = html2json.html2json(fs.readFileSync(website_folder + file, {encoding:'utf8', flag:'r'}));
@@ -128,8 +135,10 @@ for (const file of fs.readdirSync(website_folder)) {
     }
 }
 
+//create krunkscript for the clientside of the code
 const client_side = hardcoded_ks.client(onStart, onRender);
 
+//convert all code to base64
 default_source.krunker_map.scripts.client = Buffer.from(client_side).toString("base64");
 default_source.krunker_map.scripts.server = Buffer.from(server_side).toString("base64");
 
