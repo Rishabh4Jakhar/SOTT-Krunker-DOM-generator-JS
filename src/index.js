@@ -13,9 +13,12 @@ import hardcoded_ks from "./constants/hardcoded_ks.js";
 
 const __filename = fileURLToPath(import.meta.url);
 
-const src = path.dirname(__filename);
-console.log(cwd());
-const target_folder = cwd() + "/";
+const src = path.dirname(__filename) + "/";
+const target_folder = "/home/clemster/Desktop/website4/";//cwd() + "/";
+
+console.log(src);
+console.log(target_folder);
+
 
 let onRender = hardcoded_ks.onRender;
 let onStart = hardcoded_ks.onStart;
@@ -50,14 +53,16 @@ function name_generator(length = 8 /*should be about 1,198,774,720 combinations?
 
 //get all child elements that match the given type.
 function all_el(el, type){
+	console.log(type);
 	return el.filter(main_element => main_element.node === "element" && main_element.tag === type);
 }
 
 //initialize head tags, and start building dom.
 function build_dom(obj){
 	//get the first head and body element.
-	let head = all_el(obj.child[0].child, "head");
-	let body = all_el(obj.child[0].child, "body");
+	console.log(obj, "a");
+	let head = all_el(obj.child.find(child => child.node == "element").child, "head");
+	let body = all_el(obj.child.find(child => child.node == "element").child, "body");
 
 	if (head.length > 1 || body.length > 1) warning_stack.push("❌ [WARN] You can not have multiple head/body child elements within the <html> tags. Duplicate head/body elements will be ignored.");
 	head = head[0];
@@ -137,7 +142,7 @@ function generate_dom(obj, parent) {
 //TODO: Multiple html files.
 for (const file of fs.readdirSync(target_folder)) {
     if (file == "index.html") {
-		let contents = html2json.html2json(fs.readFileSync(target_folder + file, {encoding:'utf8', flag:'r'}));
+		let contents = html2json.html2json(fs.readFileSync(target_folder + file, {encoding:'utf8', flag:'r'}).replace("<!DOCTYPE html>", ""));
 		build_dom(contents);
     }
 }

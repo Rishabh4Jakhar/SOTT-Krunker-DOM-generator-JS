@@ -13,7 +13,8 @@
 	"main": "index.js",
 	"scripts": {
 		"unload": "sudo npm uninstall -g --save",
-		"load": "sudo npm install -g"
+		"load": "sudo npm install -g",
+		"try": "cd ~/Desktop/website4 && krdom"
 	},
 	"keywords": [
 		"krunker",
