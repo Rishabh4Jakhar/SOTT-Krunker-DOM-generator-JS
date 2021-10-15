@@ -14,11 +14,7 @@ import hardcoded_ks from "./constants/hardcoded_ks.js";
 const __filename = fileURLToPath(import.meta.url);
 
 const src = path.dirname(__filename) + "/";
-const target_folder = "/home/clemster/Desktop/website4/";//cwd() + "/";
-
-console.log(src);
-console.log(target_folder);
-
+const target_folder = cwd() + "/";
 
 let onRender = hardcoded_ks.onRender;
 let onStart = hardcoded_ks.onStart;
@@ -53,30 +49,33 @@ function name_generator(length = 8 /*should be about 1,198,774,720 combinations?
 
 //get all child elements that match the given type.
 function all_el(el, type){
-	console.log(type);
 	return el.filter(main_element => main_element.node === "element" && main_element.tag === type);
 }
 
 //initialize head tags, and start building dom.
 function build_dom(obj){
 	//get the first head and body element.
-	console.log(obj, "a");
-	let head = all_el(obj.child.find(child => child.node == "element").child, "head");
-	let body = all_el(obj.child.find(child => child.node == "element").child, "body");
+	if (!obj.child.some(child => child?.node == "element" && child?.tag == "html")) throw("❌ [ERR] Missing <html> tags. HTML structure not valid.")
+	let head = all_el(obj.child.find(child => child?.node == "element").child, "head");
+	let body = all_el(obj.child.find(child => child?.node == "element").child, "body");
 
 	if (head.length > 1 || body.length > 1) warning_stack.push("❌ [WARN] You can not have multiple head/body child elements within the <html> tags. Duplicate head/body elements will be ignored.");
 	head = head[0];
-	body = body[0];
+	body = body[0] ?? function(){throw("❌ [ERR] Missing <body> tag. HTML structure not valid.")}();
 
 	//get the site title and change it to map name.
-	let title = all_el(head.child, "title");
-	if (title.length > 1) warning_stack.push("❌ [WARN] You can not have multiple <title> tags. Only the first one will be applied.");
-	default_source.krunker_map.name = title[0]?.child[0].text ?? "No title";
+	default_source.krunker_map.name = "No title";
+	
+	if (head?.child){
+		let title = all_el(head.child, "title");
+		if (title.length > 1) warning_stack.push("❌ [WARN] You can not have multiple <title> tags. Only the first one will be applied.");
+		default_source.krunker_map.name = title[0]?.child[0].text ?? "No title";
 
-	//add linked stylesheets.
-	for (const link of all_el(head.child, "link")) {
-		if (link?.attr?.rel == "stylesheet" && link?.attr?.href){
-			imported_styles.push(CSSJSON.toJSON(fs.readFileSync(target_folder + link?.attr?.href)));
+		//add linked stylesheets.
+		for (const link of all_el(head.child, "link")) {
+			if (link?.attr?.rel == "stylesheet" && link?.attr?.href){
+				imported_styles.push(CSSJSON.toJSON(fs.readFileSync(target_folder + link?.attr?.href)));
+			}
 		}
 	}
 
@@ -100,13 +99,13 @@ function generate_dom(obj, parent) {
 	//class styling
 	if (obj?.attr?.class) {
 		let classList = typeof obj?.attr?.class === "string" ? [obj?.attr?.class] : [...obj?.attr?.class];
-		classList.map(class_name => {Object.assign(element_style, imported_styles[0].children?.["." + class_name]?.attributes ?? {})})
+		classList.map(class_name => {Object.assign(element_style, imported_styles[0]?.children?.["." + class_name]?.attributes ?? {})})
 	}
 
 	//id styling
 	if (obj?.attr?.id) {
 		let idList = typeof obj?.attr?.id === "string" ? [obj?.attr?.id] : [...obj?.attr?.id];
-		idList.map(id_name => {Object.assign(element_style, imported_styles[0].children?.["#" + id_name]?.attributes ?? {})})
+		idList.map(id_name => {Object.assign(element_style, imported_styles[0]?.children?.["#" + id_name]?.attributes ?? {})})
 	}
 
 	//inline styling
