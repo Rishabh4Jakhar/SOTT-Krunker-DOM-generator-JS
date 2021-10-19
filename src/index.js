@@ -94,45 +94,44 @@ function build_dom(obj){
 	}
 }
 
+function get_imported_style_by_css_name(imported_styles, tag){
+	let style_object = {};
+
+	Object.entries(imported_styles[0]?.children).filter(names => names[0].split(", ").includes(tag))
+	.map(attribs => Object.assign(style_object, attribs[1].attributes));
+
+	return style_object;
+}
+
 function generate_dom(obj, parent) {
 	//create element name.
 	let tag = obj?.tag ? obj.tag : "inline";
 	let element_name = tag + "_" + name_generator();
 	if ((debug_html || debug_css) && debug_separator) console.log(`[HTML/CSS] ----- ${element_name} -----`);
 
-	// group of styling based on highest priorities.
+	// group styling based on highest priorities.
+
 	let element_style = {};
 	//default tag styling
 	Object.assign(element_style, default_styles.children?.[tag]?.attributes ?? {});
 
 	//tag styling override
-	Object.entries(imported_styles[0]?.children)
-		.filter(names => names[0]
-		.split(",")
-		.includes(tag)
-	)
-	.map(attribs => Object.assign(element_style, attribs[1].attributes));
+	Object.assign(element_style, get_imported_style_by_css_name(imported_styles, tag));
 
 	//class styling
 	if (obj?.attr?.class) {
 		let classList = typeof obj?.attr?.class === "string" ? [obj?.attr?.class] : [...obj?.attr?.class];
-
-		// Object.entries(imported_styles[0]?.children)
-		// .filter(names => names[0]
-		// 	.split(",")
-		// 	.includes("." + class_name)
-		// )
-		// .map(attribs => Object.assign(element_style, attribs[1].attributes));
-		//console.log(Object.entries(imported_styles[0]?.children));
-		//classList.map(class_name => {imported_styles[0]?.children?.filter(child => child.split(",").includes(class_name)).map(child => {Object.assign(element_style, child)})})
-//		classList.map(class_name => {Object.entries(imported_styles[0]?.children).filter(names => names[0].split(",").includes("." + class_name)).map(attribs => Object.assign(element_style, attribs.attributes))});//?.filter(child => child.split(",").includes(class_name)).map(child => {Object.assign(element_style, child)})})
-		//classList.map(class_name => {Object.assign(element_style, imported_styles[0]?.children?.["." + class_name]?.attributes ?? {})})
+		classList.map(class_name => {
+			Object.assign(element_style, get_imported_style_by_css_name(imported_styles, "." + class_name))
+		})
 	}
 
 	//id styling
 	if (obj?.attr?.id) {
 		let idList = typeof obj?.attr?.id === "string" ? [obj?.attr?.id] : [...obj?.attr?.id];
-		idList.map(id_name => {Object.assign(element_style, imported_styles[0]?.children?.["#" + id_name]?.attributes ?? {})})
+		idList.map(id_name => {
+			Object.assign(element_style, get_imported_style_by_css_name(imported_styles, "#" + id_name))
+		})
 	}
 
 	//inline styling
@@ -151,7 +150,7 @@ function generate_dom(obj, parent) {
 			if (debug_html) console.log(`[HTML] Generated ${tag} "${element_name}" and appended it to ${parent}`);
 			onStart += `    GAME.UI.addDIV("${element_name}", true, "${element_style_inline}", "${parent}");\n`;
 			if (debug_html) console.log(`[HTML] Updated ${tag} "${element_name}" 's text to "${stripped_text}"`);
-			onStart += `    GAME.UI.updateDIVText("${element_name}", "${stripped_text}");\n`;
+			onStart += `    GAME.UI.updateDIVText("${element_name}", "${stripped_text.replace(/(\s+)/gm, " ")}");\n`;
 		}
 	}
 	//if its an element, keep recussing till text is found.

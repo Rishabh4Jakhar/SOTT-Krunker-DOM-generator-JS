@@ -12,6 +12,8 @@ const hardcoded_ks = {
 	GAME.UI.updateDIV("uiBase", "width", "");
 	GAME.UI.updateDIV("uiBase", "height", "");
 
+	GAME.MODS.load("https://krunker-user-assets.nyc3.digitaloceanspaces.com/md47232/mod.zip");
+
 	GAME.DEFAULT.disablePrediction();
 	GAME.DEFAULT.disablePlayerBehaviour();
 	GAME.DEFAULT.disable3D();
