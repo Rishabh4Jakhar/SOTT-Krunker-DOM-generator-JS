@@ -35,9 +35,18 @@ const imported_styles = [];
 //list of all generated names.
 const names = [];
 
+//go thru html files and start generating dom.
+//TODO: Multiple html files.
+for (const file of fs.readdirSync(target_folder)) {
+    if (file == "index.html") {
+		let contents = html2json.html2json(fs.readFileSync(target_folder + file, {encoding:'utf8', flag:'r'}).replace("<!DOCTYPE html>", ""));
+		build_dom(contents);
+    }
+}
+
 //generate a fully unique name.
 function name_generator(length = 8 /*should be about 1,198,774,720 combinations?*/) {
-    let alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890", name = "bashSOTT_";
+    let alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890", name = "SOTT_";
     while (true) {
         for (let i = 0; i < length; i++) name += alphabet[Math.floor(Math.random() * alphabet.length)];
         if (!names.includes(name)) break;
@@ -96,10 +105,28 @@ function generate_dom(obj, parent) {
 	//default tag styling
 	Object.assign(element_style, default_styles.children?.[tag]?.attributes ?? {});
 
+	//tag styling override
+	Object.entries(imported_styles[0]?.children)
+		.filter(names => names[0]
+		.split(",")
+		.includes(tag)
+	)
+	.map(attribs => Object.assign(element_style, attribs[1].attributes));
+
 	//class styling
 	if (obj?.attr?.class) {
 		let classList = typeof obj?.attr?.class === "string" ? [obj?.attr?.class] : [...obj?.attr?.class];
-		classList.map(class_name => {Object.assign(element_style, imported_styles[0]?.children?.["." + class_name]?.attributes ?? {})})
+
+		// Object.entries(imported_styles[0]?.children)
+		// .filter(names => names[0]
+		// 	.split(",")
+		// 	.includes("." + class_name)
+		// )
+		// .map(attribs => Object.assign(element_style, attribs[1].attributes));
+		//console.log(Object.entries(imported_styles[0]?.children));
+		//classList.map(class_name => {imported_styles[0]?.children?.filter(child => child.split(",").includes(class_name)).map(child => {Object.assign(element_style, child)})})
+//		classList.map(class_name => {Object.entries(imported_styles[0]?.children).filter(names => names[0].split(",").includes("." + class_name)).map(attribs => Object.assign(element_style, attribs.attributes))});//?.filter(child => child.split(",").includes(class_name)).map(child => {Object.assign(element_style, child)})})
+		//classList.map(class_name => {Object.assign(element_style, imported_styles[0]?.children?.["." + class_name]?.attributes ?? {})})
 	}
 
 	//id styling
@@ -135,15 +162,6 @@ function generate_dom(obj, parent) {
 			generate_dom(child, element_name);
 		}
 	}
-}
-
-//go thru html files and start generating dom.
-//TODO: Multiple html files.
-for (const file of fs.readdirSync(target_folder)) {
-    if (file == "index.html") {
-		let contents = html2json.html2json(fs.readFileSync(target_folder + file, {encoding:'utf8', flag:'r'}).replace("<!DOCTYPE html>", ""));
-		build_dom(contents);
-    }
 }
 
 //create krunkscript for the clientside of the code

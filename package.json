@@ -14,7 +14,7 @@
 	"scripts": {
 		"unload": "sudo npm uninstall -g --save",
 		"load": "sudo npm install -g",
-		"try": "cd ~/Desktop/website4 && krdom"
+		"try": "cd ~/Desktop/website4 && krdom || cd C:/Users/Clemster/Desktop/website4 && krdom"
 	},
 	"keywords": [
 		"krunker",
