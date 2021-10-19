@@ -24,9 +24,8 @@ const server_side = hardcoded_ks.server;
 const warning_stack = [];
 
 //wether to show css or html build debugging.
-const debug_css = false;
-const debug_html = false;
-const debug_separator = false;
+const debug_html = argv.includes("--html");
+const debug_separator = argv.includes("--sep");
 
 //all external styles.
 const default_styles = CSSJSON.toJSON(fs.readFileSync(src + "/constants/index.css"));
@@ -107,7 +106,7 @@ function generate_dom(obj, parent) {
 	//create element name.
 	let tag = obj?.tag ? obj.tag : "inline";
 	let element_name = tag + "_" + name_generator();
-	if ((debug_html || debug_css) && debug_separator) console.log(`[HTML/CSS] ----- ${element_name} -----`);
+	if (debug_html && debug_separator) console.log(`[HTML/CSS] ----- ${element_name} -----`);
 
 	// group styling based on highest priorities.
 
