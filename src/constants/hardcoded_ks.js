@@ -31,8 +31,7 @@ const hardcoded_ks = {
 	GAME.SETTINGS.set("playerVolume", "0");
 	GAME.SETTINGS.set("dialogueVolume", "0");
 
-	GAME.UI.addDIV("SOTT_BODY_CANVAS", true, "position: absolute; height: 100%; width: 100%; overflow: auto; z-index: 2147483646; background-color: white;");
-	GAME.UI.addDIV("SOTT_BODY", true, "display: block; position: relative;", "SOTT_BODY_CANVAS");
+	GAME.UI.addDIV("SOTT_CANVAS", true, "position: absolute; height: 100%; width: 100%; overflow: auto; z-index: 2147483646; background-color: white;");
 
 	GAME.log("[SOTT KRDom] Website succesfully loaded!");
 `,

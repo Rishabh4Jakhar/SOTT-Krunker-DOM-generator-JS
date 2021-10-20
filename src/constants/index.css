@@ -1,4 +1,9 @@
 /* WARNING: THESE ARE DEFAULT HTML PRESETS, DO NOT CHANGE UNLESS YOU KNOW WHAT YOU ARE DOING */
+SOTT_BODY{
+	display: block;
+	position: relative;
+	margin: 8px;
+}
 
 inline {
 	all: inherit;
@@ -6,87 +11,87 @@ inline {
 	display: inline;
 }
 
+/*bold*/
+strong {
+	font-weight: bold;
+}
+
+b{
+	font-weight: bold;
+}
+
+/*italic*/
+address {
+	font-style: italic;
+}
+
+cite{
+	font-style: italic;
+}
+
+dfn{
+	font-style: italic;
+}
+
+em {
+	font-style: italic;
+}
+
+i {
+	font-style: italic;
+}
+
+/*inline display*/
+map {
+	display: inline;
+}
+
 span {
 	display: inline;
 }
 
-div {
+abbr{
+	display: inline;
+}
+
+/*block display*/
+section {
 	display: block;
 }
 
-table {
-	display: table;
+address {
+	display: block;
 }
 
-tr {
-	display: table-row;
-	vertical-align: inherit;
-	border-color: inherit;
+nav {
+	display: block;
 }
 
-tfoot {
-	display: table-footer-group;
-	vertical-align: middle;
-	border-color: inherit;
-}
-
-li {
-	display: list-item;
+footer {
+	display: block;
 }
 
 html {
 	display: block;
 }
 
-p {
+div {
+	display: block;
+}
+
+article {
+	display: block;
+}
+
+blockquote {
 	display: block;
 	margin-top: 1em;
 	margin-bottom: 1em;
-	margin-left: 0;
-	margin-right: 0;
+	margin-left: 40px;
+	margin-right: 40px;
 }
 
-tbody {
-	display: table-row-group;
-	vertical-align: middle;
-	border-color: inherit;
-}
-
-table {
-	display: table;
-	border-collapse: separate;
-	border-spacing: 2px;
-	border-color: gray;
-}
-
-thead {
-	display: table-header-group;
-	vertical-align: middle;
-	border-color: inherit;
-}
-
-ul {
-	display: block;
-	list-style-type: disc;
-	margin-top: 1em;
-	margin-bottom: 1 em;
-	margin-left: 0;
-	margin-right: 0;
-	padding-left: 40px;
-}
-
-th {
-	display: table-cell;
-	vertical-align: inherit;
-	font-weight: bold;
-	text-align: center;
-}
-
-td {
-	display: table-cell;
-	vertical-align: inherit;
-}
-
+/*headers*/
 h1 {
 	display: block;
 	font-size: 2em;
@@ -147,6 +152,156 @@ h6 {
 	font-weight: bold;
 }
 
+/*table*/
+
+/*text decorations*/
+small {
+	font-size: smaller;
+}
+
+mark {
+	background-color: yellow;
+	color: black;
+}
+
+strike {
+	text-decoration: line-through;
+}
+
+sup {
+	vertical-align: super;
+	font-size: smaller;
+}
+
+sub {
+	vertical-align: sub;
+	font-size: smaller;
+}
+
+s {
+	text-decoration: line-through;
+}
+
+del {
+	text-decoration: line-through;
+}
+
+code {
+	font-family: monospace;
+}
+
+samp {
+	font-family: monospace;
+}
+
+kbd {
+	font-family: monospace;
+}
+
+bdo {
+	unicode-bidi: bidi-override;
+}
+
+u {
+	text-decoration: underline;
+}
+
+ins {
+	text-decoration: underline;
+}
+
+p {
+	display: block;
+	margin-top: 1em;
+	margin-bottom: 1em;
+	margin-left: 0;
+	margin-right: 0;
+}
+/*table*/
+table {
+	display: table;
+	border-collapse: separate;
+	border-spacing: 2px;
+	border-color: gray;
+}
+
+tbody {
+	display: table-row-group;
+	vertical-align: middle;
+	border-color: inherit;
+}
+
+thead {
+	display: table-header-group;
+	vertical-align: middle;
+	border-color: inherit;
+}
+
+th {
+	display: table-cell;
+	vertical-align: inherit;
+	font-weight: bold;
+	text-align: center;
+}
+
+td {
+	display: table-cell;
+	vertical-align: inherit;
+}
+
+tr {
+	display: table-row;
+	vertical-align: inherit;
+	border-color: inherit;
+}
+
+tfoot {
+	display: table-footer-group;
+	vertical-align: middle;
+	border-color: inherit;
+}
+
+caption {
+	display: table-caption;
+	text-align: center;
+}
+
+col {
+	display: table-column;
+}
+
+colgroup {
+	display: table-column-group;
+}
+
+/*unsorted list*/
+ul {
+	display: block;
+	list-style-type: disc;
+	margin-top: 1em;
+	margin-bottom: 1 em;
+	margin-left: 0;
+	margin-right: 0;
+	padding-left: 40px;
+}
+
+/*list item*/
+li {
+	display: list-item;
+}
+
+/*ordered list*/
+ol {
+	display: block;
+	list-style-type: decimal;
+	margin-top: 1em;
+	margin-bottom: 1em;
+	margin-left: 0;
+	margin-right: 0;
+	padding-left: 40px;
+}
+
+/*horizontal rule*/
 hr {
 	display: block;
 	margin-top: 0.5em;
@@ -157,9 +312,49 @@ hr {
 	border-width: 1px;
 }
 
+
+/*url*/
 a {
 	display: inline;
 	color: #215df6;
 	text-decoration: underline;
 	cursor: pointer;
+}
+
+/*description list.*/
+dl {
+	display: block;
+	margin-top: 1em;
+	margin-bottom: 1em;
+	margin-left: 0;
+	margin-right: 0;
+}
+
+dd {
+	display: block;
+	margin-left: 40px;
+}
+
+dt {
+	display: block;
+}
+
+/*label*/
+label {
+	cursor: default;
+}
+
+/*legend*/
+legend {
+	display: block;
+	padding-left: 2px;
+	padding-right: 2px;
+	border: none;
+}
+
+pre {
+	display: block;
+	font-family: monospace;
+	white-space: pre;
+	margin: 1em 0;
 }

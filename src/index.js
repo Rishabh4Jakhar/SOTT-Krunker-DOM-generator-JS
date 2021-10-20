@@ -87,17 +87,24 @@ function build_dom(obj){
 		}
 	}
 
-	//recussive creation, bind top child to body.
-	for (let child of body.child){
-		generate_dom(child, "SOTT_BODY");
-	}
+	generate_dom(body, "SOTT_CANVAS")
 }
 
 function get_imported_style_by_css_name(imported_styles, tag){
 	let style_object = {};
 
-	Object.entries(imported_styles[0]?.children).filter(names => names[0].split(", ").includes(tag))
-	.map(attribs => Object.assign(style_object, attribs[1].attributes));
+	//for every imported stylesheet.
+	imported_styles.map(stylesheet => {
+		Object.entries(stylesheet?.children)
+		//for every css class name.
+		.filter(names => names[0]
+			//split by "," regardless of spacing.
+			.match(/[^,(?! )]+/g)
+			//find match, regardless of casing.
+			.find(names => names.toLowerCase() == tag.toLowerCase()))
+		//assign newly found attributes.
+		.map(attribs => Object.assign(style_object, attribs[1].attributes));
+	});
 
 	return style_object;
 }
@@ -149,7 +156,7 @@ function generate_dom(obj, parent) {
 			if (debug_html) console.log(`[HTML] Generated ${tag} "${element_name}" and appended it to ${parent}`);
 			onStart += `    GAME.UI.addDIV("${element_name}", true, "${element_style_inline}", "${parent}");\n`;
 			if (debug_html) console.log(`[HTML] Updated ${tag} "${element_name}" 's text to "${stripped_text}"`);
-			onStart += `    GAME.UI.updateDIVText("${element_name}", "${stripped_text.replace(/(\s+)/gm, " ")}");\n`;
+			onStart += `    GAME.UI.updateDIVText("${element_name}", "${stripped_text.replace(/(\s+)/gm, " ").replace(/[\\"']/g, '\\$&').replace(/\u0000/g, '\\0')}");\n`;
 		}
 	}
 	//if its an element, keep recussing till text is found.
