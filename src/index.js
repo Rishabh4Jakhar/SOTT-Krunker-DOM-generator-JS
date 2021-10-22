@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import {cwd, argv} from "process";
+import {cwd, argv, exit} from "process";
 import { fileURLToPath } from "url";
 import fs from "fs";
 import path from "path";
@@ -11,24 +11,28 @@ import html2json from "html2json";
 import default_source from "./constants/default_source.js";
 import hardcoded_ks from "./constants/hardcoded_ks.js";
 
-const __filename = fileURLToPath(import.meta.url);
+import apply_style_order from "./modules/style/apply_style_order.js";
+import name_generator from "./modules/utils/name_generator.js";
+import escape_string from "./modules/utils/escape_string.js";
+import default_krunkscript_functions from "./constants/default_krunkscript_functions.js";
+import error from "./modules/utils/error.js";
 
-const src = path.dirname(__filename) + "/";
+const src_folder = path.dirname(fileURLToPath(import.meta.url)) + "/";
 const target_folder = cwd() + "/";
+const target_folder_contents = fs.readdirSync(target_folder, {withFileTypes: true});
 
-let onRender = hardcoded_ks.onRender;
+//TODO: Consider if this should become an array instead.
 let onStart = hardcoded_ks.onStart;
-const server_side = hardcoded_ks.server;
-
-//array of all warnings, gets displayed at end of building.
-const warning_stack = [];
 
 //wether to show css or html build debugging.
-const debug_html = argv.includes("--html");
-const debug_separator = argv.includes("--sep");
+const debug_object = {
+	debug_html: argv.includes("--html"), 
+	debug_separator: argv.includes("--sep"),
+	supressed: argv.includes("-s") || argv.includes("--supress")
+}
 
 //all external styles.
-const default_styles = CSSJSON.toJSON(fs.readFileSync(src + "/constants/index.css"));
+const default_styles = CSSJSON.toJSON(fs.readFileSync(src_folder + "/constants/index.css"));
 const imported_styles = [];
 
 //list of all generated names.
@@ -36,48 +40,63 @@ const names = [];
 
 //go thru html files and start generating dom.
 //TODO: Multiple html files.
-for (const file of fs.readdirSync(target_folder)) {
-    if (file == "index.html") {
-		let contents = html2json.html2json(fs.readFileSync(target_folder + file, {encoding:'utf8', flag:'r'}).replace("<!DOCTYPE html>", ""));
-		build_dom(contents);
-    }
+if (!target_folder_contents.some(file => file.name == "index.html" && file.isFile())){
+	error.error("index.html was not found. Every project needs a file called index.html, it serves as entry point. Make sure you're in your website's directory.");
 }
 
-//generate a fully unique name.
-function name_generator(length = 8 /*should be about 1,198,774,720 combinations?*/) {
-    let alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890", name = "SOTT_";
-    while (true) {
-        for (let i = 0; i < length; i++) name += alphabet[Math.floor(Math.random() * alphabet.length)];
-        if (!names.includes(name)) break;
-        name = "SOTT_";
-    }
-    names.push(name);
-    return name;
+//start setting things up for building to dom.
+//get file contents.
+let index_content = fs.readFileSync(target_folder + "index.html", {encoding:'utf8', flag:'r'}).replace(/<!doctype html>/ig, "");
+
+//convert to json
+let html_index;
+try {html_index = html2json.html2json(index_content);} 
+catch (e) {
+	console.warn(e);
+	error.error("Unable to parse the HTML, check the error above.");
 }
+
+//start dom building.
+build_dom(html_index);
 
 //get all child elements that match the given type.
-function all_el(el, type){
+function all_el(el, type) {
 	return el.filter(main_element => main_element.node === "element" && main_element.tag === type);
 }
 
 //initialize head tags, and start building dom.
-function build_dom(obj){
+function build_dom(obj) {
 	//get the first head and body element.
-	if (!obj.child.some(child => child?.node == "element" && child?.tag == "html")) throw("❌ [ERR] Missing <html> tags. HTML structure not valid.")
+	if (!obj.child.some(child => child?.node == "element" && child?.tag == "html")) {
+		error.error("Missing <html> tags. HTML structure not valid.");
+	}
+
 	let head = all_el(obj.child.find(child => child?.node == "element").child, "head");
 	let body = all_el(obj.child.find(child => child?.node == "element").child, "body");
 
-	if (head.length > 1 || body.length > 1) warning_stack.push("❌ [WARN] You can not have multiple head/body child elements within the <html> tags. Duplicate head/body elements will be ignored.");
-	head = head[0];
-	body = body[0] ?? function(){throw("❌ [ERR] Missing <body> tag. HTML structure not valid.")}();
+	if (head.length > 1 || body.length > 1) {
+		error.warning("You can not have multiple head/body child elements within the <html> tags. Duplicate head/body elements will be ignored.");
+	}
+
+	head = head[0] ?? error.info("No head tag found.")
+	body = body[0] ?? error.error("Missing <body> tag. HTML structure not valid.");
 
 	//get the site title and change it to map name.
 	default_source.krunker_map.name = "No title";
 	
 	if (head?.child){
 		let title = all_el(head.child, "title");
-		if (title.length > 1) warning_stack.push("❌ [WARN] You can not have multiple <title> tags. Only the first one will be applied.");
-		default_source.krunker_map.name = title[0]?.child[0].text ?? "No title";
+
+		if (title.length > 1) {
+			error.warning("You can not have multiple <title> tags. Only the first one will be applied.");
+		} 
+		else if (title.length < 1){
+			error.info("No title tag found, applying default title.");
+		}
+
+		if (title.length >= 1){
+			default_source.krunker_map.name = title[0]?.child[0].text;
+		}
 
 		//add linked stylesheets.
 		for (const link of all_el(head.child, "link")) {
@@ -86,102 +105,52 @@ function build_dom(obj){
 			}
 		}
 	}
-
-	generate_dom(body, "SOTT_CANVAS")
-}
-
-function get_imported_style_by_css_name(imported_styles, tag){
-	let style_object = {};
-
-	//for every imported stylesheet.
-	imported_styles.map(stylesheet => {
-		Object.entries(stylesheet?.children)
-		//for every css class name.
-		.filter(names => names[0]
-			//split by "," regardless of spacing.
-			.match(/[^,(?! )]+/g)
-			//find match, regardless of casing.
-			.find(names => names.toLowerCase() == tag.toLowerCase()))
-		//assign newly found attributes.
-		.map(attribs => Object.assign(style_object, attribs[1].attributes));
-	});
-
-	return style_object;
+	generate_dom(body, "SOTT_CANVAS");
 }
 
 function generate_dom(obj, parent) {
-	//create element name.
-	let tag = obj?.tag ? obj.tag : "inline";
-	let element_name = tag + "_" + name_generator();
-	if (debug_html && debug_separator) console.log(`[HTML/CSS] ----- ${element_name} -----`);
+	obj.tag ??= "inline";
+	let name = name_generator(names);
+	let element_name = obj.tag + "_" + name;
+	let element_style_inline = apply_style_order(obj, [default_styles, ...imported_styles]);
+	names.push(name);
 
-	// group styling based on highest priorities.
-
-	let element_style = {};
-	//default tag styling
-	Object.assign(element_style, default_styles.children?.[tag]?.attributes ?? {});
-
-	//tag styling override
-	Object.assign(element_style, get_imported_style_by_css_name(imported_styles, tag));
-
-	//class styling
-	if (obj?.attr?.class) {
-		let classList = typeof obj?.attr?.class === "string" ? [obj?.attr?.class] : [...obj?.attr?.class];
-		classList.map(class_name => {
-			Object.assign(element_style, get_imported_style_by_css_name(imported_styles, "." + class_name))
-		})
+	if (debug_object.debug_html && debug_object.debug_separator){
+		console.info(`[HTML/CSS] ----- ${element_name} -----`);
 	}
 
-	//id styling
-	if (obj?.attr?.id) {
-		let idList = typeof obj?.attr?.id === "string" ? [obj?.attr?.id] : [...obj?.attr?.id];
-		idList.map(id_name => {
-			Object.assign(element_style, get_imported_style_by_css_name(imported_styles, "#" + id_name))
-		})
-	}
-
-	//inline styling
-	if (obj?.attr?.style) {
-		let inline_style_object = {};
-		for (let offset = 0; offset < obj?.attr?.style.length; offset+= 2) inline_style_object[obj?.attr?.style[offset].replace(/(;|:)/gm, "")] = obj?.attr?.style[offset + 1].replace(/(;|:)/gm, "").toString()
-		Object.assign(element_style, inline_style_object)
-	}
-
-	let element_style_inline = Object.entries(element_style).map(style => {return style[0] + ": " + style[1] + ";"}).join(" ")
+	if (obj.tag === "a") console.log(obj);
 
 	//if its a piece of text, create wrapper
 	if (obj.node === "text"){
 		let stripped_text = obj.text.replace(/(\r\n|\n|\r|\t)/gm, "");
 		if (stripped_text.replace(/(\s+)/gm, "").length > 0){
-			if (debug_html) console.log(`[HTML] Generated ${tag} "${element_name}" and appended it to ${parent}`);
-			onStart += `    GAME.UI.addDIV("${element_name}", true, "${element_style_inline}", "${parent}");\n`;
-			if (debug_html) console.log(`[HTML] Updated ${tag} "${element_name}" 's text to "${stripped_text}"`);
-			onStart += `    GAME.UI.updateDIVText("${element_name}", "${stripped_text.replace(/(\s+)/gm, " ").replace(/[\\"']/g, '\\$&').replace(/\u0000/g, '\\0')}");\n`;
+			onStart += default_krunkscript_functions.addDiv(element_name, element_style_inline, parent, debug_object);
+			onStart += default_krunkscript_functions.updateDIVText(obj.tag, element_name, escape_string(stripped_text.replace(/(\s+)/gm, " ")), debug_object);
 		}
 	}
 	//if its an element, keep recussing till text is found.
 	else if (obj.node === "element") {
-		for (let child of obj.child){
-			if (debug_html) console.log(`[HTML] Generated ${obj?.tag ?? "inline"} "${element_name}" and appended it to ${parent}`);
-			onStart += `    GAME.UI.addDIV("${element_name}", true, "${element_style_inline}", "${parent}");\n`;
+		onStart += default_krunkscript_functions.addDiv(element_name, element_style_inline, parent, debug_object);
+		
+		for (const child of obj.child){
 			generate_dom(child, element_name);
 		}
 	}
 }
 
 //create krunkscript for the clientside of the code
-const client_side = hardcoded_ks.client(onStart, onRender);
+const client_side = hardcoded_ks.client(onStart, hardcoded_ks.onRender);
 
 //convert all code to base64
 default_source.krunker_map.scripts.client = Buffer.from(client_side).toString("base64");
-default_source.krunker_map.scripts.server = Buffer.from(server_side).toString("base64");
+default_source.krunker_map.scripts.server = Buffer.from(hardcoded_ks.server).toString("base64");
 
+//extra logging and copying to clipboard.
 console.log();
-if (warning_stack.length) console.log("===== Found issues: =====");
-for (const error of warning_stack) console.warn("\u001b[31m" + error + "\u001b[0m");
-if (warning_stack.length) console.log();
 
 clipboard.writeSync(JSON.stringify(default_source.krunker_map));
-if (debug_separator) console.log("===== Succesfully generated source =====");
-console.log("\u001b[32m" + "✅ Map source copied to clipboard" + "\u001b[0m");
-if (debug_separator) console.log();
+
+if (debug_object.debug_separator) console.log("===== Succesfully generated source =====");
+console.log("\x1b[32m" + "✅ Map source copied to clipboard" + "\x1b[0m");
+if (debug_object.debug_separator) console.log();
