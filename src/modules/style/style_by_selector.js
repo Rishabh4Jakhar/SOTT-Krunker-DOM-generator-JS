@@ -1,8 +1,8 @@
-export default function get_imported_style_by_css_name(imported_styles, tag){
+export default function style_by_tag(stylesheets, tag){
 	let style_object = {};
 
 	//for every imported stylesheet.
-	imported_styles.map(stylesheet => {
+	stylesheets.map(stylesheet => {
 		Object.entries(stylesheet?.children)
 		//for every css class name.
 		.filter(names => names[0]

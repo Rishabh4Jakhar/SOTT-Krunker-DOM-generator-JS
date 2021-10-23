@@ -10,12 +10,10 @@ import html2json from "html2json";
 
 import default_source from "./constants/default_source.js";
 import hardcoded_ks from "./constants/hardcoded_ks.js";
-
-import apply_style_order from "./modules/style/apply_style_order.js";
-import name_generator from "./modules/utils/name_generator.js";
-import escape_string from "./modules/utils/escape_string.js";
-import default_krunkscript_functions from "./constants/default_krunkscript_functions.js";
 import error from "./modules/utils/error.js";
+import generate_dom_obj from "./modules/utils/generate_dom.js";
+
+let generate_dom = generate_dom_obj;
 
 const src_folder = path.dirname(fileURLToPath(import.meta.url)) + "/";
 const target_folder = cwd() + "/";
@@ -24,19 +22,16 @@ const target_folder_contents = fs.readdirSync(target_folder, {withFileTypes: tru
 //TODO: Consider if this should become an array instead.
 let onStart = hardcoded_ks.onStart;
 
-//wether to show css or html build debugging.
+//all default styles.
+const default_styles = CSSJSON.toJSON(fs.readFileSync(src_folder + "/constants/index.css"));
+
+//command parameters.
 const debug_object = {
 	debug_html: argv.includes("--html"), 
 	debug_separator: argv.includes("--sep"),
-	supressed: argv.includes("-s") || argv.includes("--supress")
+	supressed: argv.includes("-s") || argv.includes("--supress"),
+	isUI: argv.includes("--ui")
 }
-
-//all external styles.
-const default_styles = CSSJSON.toJSON(fs.readFileSync(src_folder + "/constants/index.css"));
-const imported_styles = [];
-
-//list of all generated names.
-const names = [];
 
 //go thru html files and start generating dom.
 //TODO: Multiple html files.
@@ -49,15 +44,15 @@ if (!target_folder_contents.some(file => file.name == "index.html" && file.isFil
 let index_content = fs.readFileSync(target_folder + "index.html", {encoding:'utf8', flag:'r'}).replace(/<!doctype html>/ig, "");
 
 //convert to json
-let html_index;
-try {html_index = html2json.html2json(index_content);} 
+let html_json;
+try {html_json = html2json.html2json(index_content);} 
 catch (e) {
 	console.warn(e);
 	error.error("Unable to parse the HTML, check the error above.");
 }
 
 //start dom building.
-build_dom(html_index);
+build_dom(html_json);
 
 //get all child elements that match the given type.
 function all_el(el, type) {
@@ -83,7 +78,8 @@ function build_dom(obj) {
 
 	//get the site title and change it to map name.
 	default_source.krunker_map.name = "No title";
-	
+	const imported_styles = [];
+
 	if (head?.child){
 		let title = all_el(head.child, "title");
 
@@ -105,37 +101,18 @@ function build_dom(obj) {
 			}
 		}
 	}
-	generate_dom(body, "SOTT_CANVAS");
-}
 
-function generate_dom(obj, parent) {
-	obj.tag ??= "inline";
-	let name = name_generator(names);
-	let element_name = obj.tag + "_" + name;
-	let element_style_inline = apply_style_order(obj, [default_styles, ...imported_styles]);
-	names.push(name);
-
-	if (debug_object.debug_html && debug_object.debug_separator){
-		console.info(`[HTML/CSS] ----- ${element_name} -----`);
-	}
-
-	if (obj.tag === "a") console.log(obj);
-
-	//if its a piece of text, create wrapper
-	if (obj.node === "text"){
-		let stripped_text = obj.text.replace(/(\r\n|\n|\r|\t)/gm, "");
-		if (stripped_text.replace(/(\s+)/gm, "").length > 0){
-			onStart += default_krunkscript_functions.addDiv(element_name, element_style_inline, parent, debug_object);
-			onStart += default_krunkscript_functions.updateDIVText(obj.tag, element_name, escape_string(stripped_text.replace(/(\s+)/gm, " ")), debug_object);
-		}
-	}
-	//if its an element, keep recussing till text is found.
-	else if (obj.node === "element") {
-		onStart += default_krunkscript_functions.addDiv(element_name, element_style_inline, parent, debug_object);
-		
-		for (const child of obj.child){
-			generate_dom(child, element_name);
-		}
+//TODO:
+let doms = [generate_dom.generate_dom(body, "SOTT_CANVAS", [default_styles, ...imported_styles], debug_object, "\\index.html")];
+//while (doms.length > 0){
+	for (const dom of doms) {
+		for (const path of dom.external_paths) {
+			
+			if (!fs.exists(path)){
+				error.warning(`Document path \x1b[33m"${path}"\x1b[0m referenced in file \x1b[33m"${index_dom.path}"\x1b[0m does not exist.`);
+				continue;
+			}
+		}	
 	}
 }
 
@@ -147,10 +124,10 @@ default_source.krunker_map.scripts.client = Buffer.from(client_side).toString("b
 default_source.krunker_map.scripts.server = Buffer.from(hardcoded_ks.server).toString("base64");
 
 //extra logging and copying to clipboard.
-console.log();
+console.info();
 
 clipboard.writeSync(JSON.stringify(default_source.krunker_map));
 
-if (debug_object.debug_separator) console.log("===== Succesfully generated source =====");
-console.log("\x1b[32m" + "✅ Map source copied to clipboard" + "\x1b[0m");
-if (debug_object.debug_separator) console.log();
+if (debug_object.debug_separator) console.info("===== Succesfully generated source =====");
+console.info("\x1b[32m" + "✅ Map source copied to clipboard" + "\x1b[0m");
+if (debug_object.debug_separator) console.info();
