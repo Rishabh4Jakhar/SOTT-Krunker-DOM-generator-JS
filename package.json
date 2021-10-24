@@ -4,8 +4,7 @@
 		"clipboardy": "^3.0.0",
 		"cssjson": "^2.1.3",
 		"html2json": "^1.0.2",
-		"node-gyp": "^8.2.0",
-		"npm": "^8.0.0"
+		"node-gyp": "^8.2.0"
 	},
 	"name": "krunker-dom-generator",
 	"version": "0.1.3",
@@ -14,7 +13,7 @@
 	"scripts": {
 		"unload": "sudo npm uninstall -g --save",
 		"load": "sudo npm install -g",
-		"try": "cd C:/Users/Clemster/Desktop/website4 && krdom || cd ~/Desktop/website4 && krdom"
+		"try": "cd ./website1 && krdom"
 	},
 	"keywords": [
 		"krunker",

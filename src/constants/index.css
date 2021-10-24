@@ -11,9 +11,14 @@ body{
 }
 
 inline {
-	all: inherit;
-	white-space: pre-wrap;
-	display: inline;
+	color: inherit;
+	font-size: inherit;
+	font-weight: inherit;
+	text-decoration: inherit;
+	background-color: inherit;
+	display: inherit;
+	cursor: inherit;
+    pointer-events: none;
 }
 
 /*bold*/

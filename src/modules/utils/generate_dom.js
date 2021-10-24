@@ -28,10 +28,6 @@ export default {
 		this.data.body_name ??= element_name;
 		this.names.push(name);
 
-		if (obj.tag.toLowerCase() == "a") {
-			this.data.external_paths.push(path.join(path.dirname(this.data.path), obj.attr.href));
-		}
-
 		if (debug_object.debug_html && debug_object.debug_separator){
 			console.info(`[HTML/CSS] ----- ${element_name} -----`);
 		}
@@ -44,12 +40,28 @@ export default {
 				this.data.content += default_krunkscript_functions.updateDIVText(obj.tag, element_name, escape_string(stripped_text.replace(/(\s+)/gm, " ")), debug_object);
 			}
 		}
-		//if its an element, keep recussing till text is found.
+		//if its a regular element, check for children.
 		else if (obj.node === "element") {
 			this.data.content += default_krunkscript_functions.addDiv(element_name, element_style_inline, parent, debug_object);
-			
-			for (const child of obj.child){
-				this._generate_dom(child, element_name, stylesheets, debug_object);
+			if (obj?.child){
+				for (const child of obj.child){
+					this._generate_dom(child, element_name, stylesheets, debug_object);
+				}
+			}
+		}
+		//if its a link element, add external path
+		if (obj.node === "element" && obj.tag === "a" && obj?.attr.href){
+			let full_path = path.join(path.dirname(this.data.path), obj.attr.href);
+
+			// if object is already existing, add caller.
+			if (this.data.external_paths.some(external_path => external_path.path === full_path)){
+				this.data.external_path.map(external_path => {
+					if (external_path.path === full_path){
+						external_path.callers.push(element_name);
+					}
+				});
+			} else {
+				this.data.external_paths.push({path: full_path, callers: [element_name]});
 			}
 		}
 	}
